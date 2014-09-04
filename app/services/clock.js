@@ -7,6 +7,7 @@ export default Ember.Object.extend({
   five: 0,
   quarter: 0,
   hour: 0,
+  paused: false,
   init: function() {
     var self = this,
         interval = window.setInterval(function() {
@@ -19,6 +20,13 @@ export default Ember.Object.extend({
     this.init();
     this.setProperties({second: 0, minute: 0, five: 0, quarter: 0, hour: 0});
   },
+  pause: function(p) {
+    if (p === true || p === false) {
+      this.set('paused', p);
+    } else {
+      this.toggleProperty('paused');
+    }
+  },
   intervalChange: function() {
     if (Ember.testing) {
       return this.reset();
@@ -26,27 +34,29 @@ export default Ember.Object.extend({
     throw Error('The clock interval cannot be changed except during testing');
   }.observes('intervalTime'),
   tick: function() {
-    Ember.run(this, function() {
-      var second = this.incrementProperty('second');
+    if (!this.paused) {
+      Ember.run(this, function() {
+        var second = this.incrementProperty('second');
 
-      if (second && (second % 60) === 0) {
-        var minute = this.incrementProperty('minute');
+        if (second && (second % 60) === 0) {
+          var minute = this.incrementProperty('minute');
 
-        if (minute !== 0) {
-          if ((minute % 5) === 0) {
-            this.incrementProperty('five');
-          }
+          if (minute !== 0) {
+            if ((minute % 5) === 0) {
+              this.incrementProperty('five');
+            }
 
-          if ((minute % 15) === 0) {
-            this.incrementProperty('quarter');
-          }
+            if ((minute % 15) === 0) {
+              this.incrementProperty('quarter');
+            }
 
-          if ((minute % 60) === 0) {
-            this.incrementProperty('hour');
+            if ((minute % 60) === 0) {
+              this.incrementProperty('hour');
+            }
           }
         }
-      }
-    });
+      });
+    }
   },
   willDestroy: function() {
     window.clearInterval(this.get('interval'));
